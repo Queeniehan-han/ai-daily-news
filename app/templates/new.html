@@ -1,0 +1,122 @@
+{% extends "layout.html" %}
+
+{% block title %}新任务 · AI每日大事件 Max{% endblock %}
+
+{% block content %}
+<section class="hero page-hero">
+    <div class="hero-copy">
+        <span class="eyebrow">NEW BRIEFING</span>
+        <h1>创建今日 AI 简报</h1>
+        <p>选择关注范围和分析模型。留空板块代表全量抓取，API Key 始终只在本次任务内存中使用。</p>
+    </div>
+    <div class="window-card">
+        <span>严格抓取窗口 · CST</span>
+        <strong>{{ window_start }}</strong>
+        <i>至</i>
+        <strong>{{ window_end }}</strong>
+    </div>
+</section>
+
+<form method="post" action="/runs" class="task-builder" data-submit-lock>
+    <section class="panel builder-section">
+        <div class="builder-step"><span>01</span></div>
+        <div class="builder-content">
+            <div class="section-head">
+                <div>
+                    <h2>选择情报范围</h2>
+                    <p class="section-subtitle">{{ source_total }} 个信息源已就绪，其中 {{ web_total }} 个网站与公司源、{{ kol_total }} 个 X KOL。</p>
+                </div>
+                <div class="compact-actions">
+                    <button type="button" class="ghost-button" data-check-all="source-categories">全选</button>
+                    <button type="button" class="ghost-button" data-check-none="source-categories">全量模式</button>
+                </div>
+            </div>
+            <div class="checkbox-grid category-grid" id="source-categories">
+                {% for category in source_categories %}
+                    <label class="check-item">
+                        <input type="checkbox" name="categories" value="{{ category }}">
+                        <span><i aria-hidden="true"></i>{{ category }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+            <p class="help selection-hint" data-selection-hint>当前为全量模式，将抓取全部启用信息源（含<a href="/sources">自定义信息源</a>）。</p>
+        </div>
+    </section>
+
+    <section class="panel builder-section">
+        <div class="builder-step"><span>02</span></div>
+        <div class="builder-content">
+            <div class="section-head">
+                <div>
+                    <h2>配置智能分析</h2>
+                    <p class="section-subtitle">填写 Key 后，抓取结束会自动去重、筛选并生成结构化结论。</p>
+                </div>
+            </div>
+            <div class="model-config-row">
+                <div class="field compact-field">
+                    <label for="provider">Provider</label>
+                    <select id="provider" name="provider" data-model-target="model">
+                        {% for provider in providers %}
+                            <option value="{{ provider }}" {% if provider == default_provider %}selected{% endif %}>
+                                {{ provider }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="field compact-field">
+                    <label for="model">模型</label>
+                    <select id="model" name="model" data-default-model="{{ default_model }}"></select>
+                </div>
+
+                <div class="field compact-field wide">
+                    <label for="custom_model">手动型号 <span>可选</span></label>
+                    <input id="custom_model" type="text" name="custom_model"
+                           autocomplete="off"
+                           placeholder="手动型号优先于预设模型">
+                </div>
+
+                <div class="field compact-field wide secret-input">
+                    <label for="api_key">API Key <span>可选</span></label>
+                    <div class="input-with-action">
+                        <input id="api_key" type="password" name="api_key"
+                               autocomplete="off"
+                               placeholder="{% if env_key_configured %}环境变量已配置，可留空{% else %}填写后自动分析{% endif %}">
+                        <button type="button" class="input-action" data-toggle-secret="api_key" aria-label="显示或隐藏 API Key">显示</button>
+                    </div>
+                </div>
+                <p class="help inline-help">
+                    <span class="privacy-dot"></span>
+                    Key 不写入数据库、不出现在任务日志。留空时只执行抓取，可稍后在结果页分析。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    {% if admin_required %}
+        <section class="panel builder-section compact-builder">
+            <div class="builder-step"><span>03</span></div>
+            <div class="builder-content">
+                <div class="field">
+                    <label for="admin_password">管理员密码</label>
+                    <input id="admin_password" type="password" name="admin_password" autocomplete="current-password" required>
+                </div>
+            </div>
+        </section>
+    {% endif %}
+
+    <section class="launch-bar">
+        <div>
+            <strong>准备创建简报</strong>
+            <span>通常需要数分钟，页面会实时展示每个信息源的进度。</span>
+        </div>
+        <button type="submit" class="launch-button" data-submit-label="启动全量抓取">
+            <span>启动全量抓取</span><i aria-hidden="true">→</i>
+        </button>
+    </section>
+</form>
+
+<script>
+window.PROVIDER_MODELS = {{ provider_models | tojson }};
+</script>
+{% endblock %}

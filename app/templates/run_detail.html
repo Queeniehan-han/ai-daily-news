@@ -1,0 +1,152 @@
+{% extends "layout.html" %}
+
+{% block title %}任务 {{ run.id }} · AI每日大事件 Max{% endblock %}
+
+{% block content %}
+<section class="hero page-hero">
+    <div class="hero-copy">
+        <span class="eyebrow">BRIEFING RESULT</span>
+        <h1>任务结果</h1>
+        <p>
+            <span id="status-value" class="badge status-{{ run.status }}">
+                {{ status_labels.get(run.status, run.status) }}
+            </span>
+            <span class="muted">{{ run.id }}</span>
+        </p>
+    </div>
+    <div class="hero-actions">
+        <a class="secondary-button" href="/runs/{{ run.id }}/details">抓取详情</a>
+        <a class="secondary-button" href="/runs">返回历史</a>
+    </div>
+</section>
+
+{% if run.error_text %}
+    <section class="alert">
+        {{ run.error_text }}
+    </section>
+{% endif %}
+
+<section class="dashboard-metrics run-metrics">
+    <div class="metric-card accent">
+        <span class="metric-label">有效线索</span>
+        <strong>{{ run.raw_count }}</strong>
+        <small>条原始新闻</small>
+    </div>
+    <div class="metric-card">
+        <span class="metric-label">覆盖报告</span>
+        <strong>{{ run.report_count }}</strong>
+        <small>个信源已审计</small>
+    </div>
+    <div class="metric-card">
+        <span class="metric-label">精选结论</span>
+        <strong>{{ run.structured_count }}</strong>
+        <small>条结构化新闻</small>
+    </div>
+    <div class="metric-card model-metric">
+        <span class="metric-label">分析引擎</span>
+        <strong>{{ run.provider or default_provider }}</strong>
+        <small>{{ run.model or default_model }}</small>
+    </div>
+</section>
+
+{% if selected_categories %}
+    <section class="panel compact scope-strip">
+        <span>本轮范围</span>
+        <strong>{{ selected_categories | join("、") }}</strong>
+    </section>
+{% endif %}
+
+{% if is_live %}
+    <section class="panel live-panel" id="live-run" data-run-id="{{ run.id }}" data-live="1">
+        <div class="section-head">
+            <div>
+                <span class="eyebrow">LIVE PIPELINE</span>
+                <h2>任务正在执行</h2>
+            </div>
+            <span class="live-dot"><i></i> 实时更新</span>
+        </div>
+        <div class="progress-track" aria-hidden="true"><span data-live-progress></span></div>
+        <p id="live-status-summary" class="muted live-summary">实时连接准备中。</p>
+        <pre id="log-box" class="log-box"></pre>
+    </section>
+{% endif %}
+
+{% if run.status in ["crawled", "completed"] and run.raw_count > 0 %}
+    <details class="panel analysis-panel" {% if run.structured_count == 0 %}open{% endif %}>
+        <summary>
+            <span>
+                <small>ANALYSIS ENGINE</small>
+                <strong>{% if run.structured_count > 0 %}使用其他模型重新分析{% else %}生成 AI 结构化简报{% endif %}</strong>
+            </span>
+            <i aria-hidden="true"></i>
+        </summary>
+        <form method="post" action="/runs/{{ run.id }}/analyze" class="form-grid">
+            <div class="model-config-row full">
+                <div class="field compact-field">
+                    <label for="provider">Provider</label>
+                    <select id="provider" name="provider" data-model-target="model">
+                        {% for provider in providers %}
+                            <option value="{{ provider }}" {% if provider == (run.provider or default_provider) %}selected{% endif %}>
+                                {{ provider }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="field compact-field">
+                    <label for="model">模型</label>
+                    <select id="model" name="model" data-default-model="{{ run.model or default_model }}"></select>
+                </div>
+
+                <div class="field compact-field wide">
+                    <label for="custom_model">手动型号（可选）</label>
+                    <input id="custom_model" type="text" name="custom_model"
+                           autocomplete="off"
+                           placeholder="例如 gpt-4o-mini"
+                           value="{% if run.model and run.model not in provider_models.get(run.provider or default_provider, []) %}{{ run.model }}{% endif %}">
+                </div>
+
+                <div class="field compact-field wide secret-input">
+                    <label for="api_key">API Key</label>
+                    <div class="input-with-action">
+                        <input id="api_key" type="password" name="api_key"
+                               autocomplete="off"
+                               placeholder="{% if env_key_configured %}环境变量已配置，可留空{% else %}请输入 API Key{% endif %}"
+                               {% if not env_key_configured %}required{% endif %}>
+                        <button type="button" class="input-action" data-toggle-secret="api_key" aria-label="显示或隐藏 API Key">显示</button>
+                    </div>
+                </div>
+                <p class="help inline-help"><span class="privacy-dot"></span> API Key 只用于本次分析请求，不会保存到数据库。</p>
+            </div>
+
+            {% if admin_required %}
+                <div class="field">
+                    <label for="admin_password">管理员密码</label>
+                    <input id="admin_password" type="password" name="admin_password" autocomplete="current-password" required>
+                </div>
+            {% endif %}
+
+            <div class="actions full">
+                <button type="submit">{% if run.structured_count > 0 %}重新生成分析{% else %}启动智能分析{% endif %}</button>
+            </div>
+        </form>
+    </details>
+{% endif %}
+
+{% if structured_items %}
+    {% set news_heading = "结构化新闻" %}
+    {% set news_link_url = "" %}
+    {% set news_filter_persist_key = "run-" ~ run.id %}
+    {% set show_date_range_shortcuts = true %}
+    {% set enable_multi_select_filters = true %}
+    {% include "_structured_news.html" %}
+{% elif not is_live %}
+    <section class="panel">
+        <p class="empty">暂无结构化新闻。原始条目与抓取明细请查看<a href="/runs/{{ run.id }}/details">抓取详情</a>。</p>
+    </section>
+{% endif %}
+
+<script>
+window.PROVIDER_MODELS = {{ provider_models | tojson }};
+</script>
+{% endblock %}

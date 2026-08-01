@@ -1,0 +1,141 @@
+{% extends "layout.html" %}
+
+{% block title %}抓取详情 {{ run.id }} · AI每日大事件 Max{% endblock %}
+
+{% block content %}
+<section class="hero page-hero">
+    <div class="hero-copy">
+        <span class="eyebrow">SOURCE AUDIT</span>
+        <h1>抓取详情</h1>
+        <p>
+            <span class="badge status-{{ run.status }}">{{ status_labels.get(run.status, run.status) }}</span>
+            <span class="muted">{{ run.id }} · 阶段：{{ run.phase }}</span>
+        </p>
+    </div>
+    <a class="secondary-button" href="/runs/{{ run.id }}">返回结果</a>
+</section>
+
+{% if run.error_text %}
+    <section class="alert">
+        {{ run.error_text }}
+    </section>
+{% endif %}
+
+{% if coverage %}
+    {% set issue_counts = coverage.get("issue_counts", {}) %}
+    <section class="panel audit-overview">
+        <div class="section-head">
+            <div>
+                <span class="eyebrow">COVERAGE QUALITY</span>
+                <h2>本轮信源覆盖评价</h2>
+            </div>
+            {% if coverage.get("all_covered") %}
+                <span class="audit-verdict healthy"><i></i> 全部信源均已执行</span>
+            {% else %}
+                <span class="audit-verdict warning"><i></i> 存在未执行信源</span>
+            {% endif %}
+        </div>
+        <div class="dashboard-metrics audit-metrics">
+            <div class="metric-card accent"><span class="metric-label">应抓信源</span><strong>{{ coverage.get("expected_total", 0) }}</strong><small>本轮目标</small></div>
+            <div class="metric-card"><span class="metric-label">实际覆盖</span><strong>{{ coverage.get("report_rows", 0) }}</strong><small>已生成报告</small></div>
+            <div class="metric-card"><span class="metric-label">命中内容</span><strong>{{ coverage.get("success_count", 0) }}</strong><small>窗口内有新内容</small></div>
+            <div class="metric-card"><span class="metric-label">正常空窗</span><strong>{{ issue_counts.get("window_empty", 0) }}</strong><small>已验证无新内容</small></div>
+            <div class="metric-card"><span class="metric-label">完整性受限</span><strong>{{ issue_counts.get("suspected_partial", 0) + issue_counts.get("unknown_empty", 0) }}</strong><small>上游或额度受限</small></div>
+        </div>
+        {% if not coverage.get("all_covered") %}
+            <p class="warn">存在未被尝试的信源：{{ coverage.get("missing_sources", []) | join("、") }}</p>
+        {% endif %}
+    </section>
+{% endif %}
+
+{% if reports %}
+    <section class="panel audit-table-panel">
+        <div class="section-head">
+            <div>
+                <h2>信源抓取明细</h2>
+                <p class="section-subtitle">状态、策略与失败原因均完整保留，便于定位外部限制和解析问题。</p>
+            </div>
+            <div class="search-input table-search">
+                <span aria-hidden="true"></span>
+                <input type="search" placeholder="搜索信源或状态" data-table-search="source-report-table">
+            </div>
+        </div>
+        <div class="table-shell">
+        <table id="source-report-table">
+            <thead>
+            <tr>
+                <th>信源</th>
+                <th>板块</th>
+                <th>类型</th>
+                <th>状态</th>
+                <th>条数</th>
+                <th>策略</th>
+                <th>原因</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for report in reports %}
+                <tr data-table-row>
+                    <td>{{ report.name }}</td>
+                    <td>{{ report.category }}</td>
+                    <td>{{ report.source_type }}</td>
+                    <td><span class="report-status status-{{ report.status }}">{{ status_labels.get(report.status, report.status) }}</span></td>
+                    <td><strong>{{ report.count }}</strong></td>
+                    <td>{{ report.strategy }}</td>
+                    <td class="report-reason">
+                        <span class="issue-pill issue-{{ report.issue_type or 'unknown' }}">{{ issue_labels.get(report.issue_type, report.issue_type or "待确认") }}</span>
+                        {% if report.error %}<small title="{{ report.error }}">{{ report.error }}</small>{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </section>
+{% endif %}
+
+{% if raw_items %}
+    <details class="panel data-disclosure">
+        <summary>
+            <span>
+                <small>RAW EVIDENCE</small>
+                <strong>原始条目{% if run.raw_count > raw_items | length %}（展示前 {{ raw_items | length }} 条）{% endif %}</strong>
+            </span>
+            <i aria-hidden="true"></i>
+        </summary>
+        <div class="table-shell">
+        <table>
+            <thead>
+            <tr>
+                <th>标题</th>
+                <th>来源</th>
+                <th>时间</th>
+                <th>链接</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in raw_items %}
+                <tr>
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.source }}</td>
+                    <td>{{ item.published_at[:16].replace("T", " ") if item.published_at else "" }}</td>
+                    <td>{% if item.url %}<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">打开原文 ↗</a>{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </details>
+{% endif %}
+
+{% if logs %}
+    <details class="panel data-disclosure">
+        <summary>
+            <span><small>RUNTIME TRACE</small><strong>运行日志</strong></span>
+            <i aria-hidden="true"></i>
+        </summary>
+        <pre class="log-box">{% for log in logs %}{{ log.message }}
+{% endfor %}</pre>
+    </details>
+{% endif %}
+{% endblock %}

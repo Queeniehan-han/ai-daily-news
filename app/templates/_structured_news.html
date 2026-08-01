@@ -1,0 +1,226 @@
+{% set active_filters = default_filters | default({}) %}
+{% macro multi_select_filter(filter_key, field_label, all_label, options, option_search_terms={}) %}
+    <div class="filter-field">
+        <label for="filter-{{ filter_key }}-{{ run.id }}">{{ field_label }}</label>
+        <div class="multi-select-filter"
+             data-multi-select
+             data-multi-select-all-label="{{ all_label }}">
+            <button type="button"
+                    id="filter-{{ filter_key }}-{{ run.id }}"
+                    class="multi-select-toggle"
+                    data-multi-select-toggle
+                    aria-haspopup="dialog"
+                    aria-controls="filter-{{ filter_key }}-panel-{{ run.id }}"
+                    aria-expanded="false">
+                <span data-multi-select-label>{{ all_label }}</span>
+            </button>
+            <div id="filter-{{ filter_key }}-panel-{{ run.id }}"
+                 class="multi-select-panel"
+                 data-multi-select-panel
+                 role="group"
+                 aria-label="{{ field_label }}多选"
+                 hidden>
+                <input type="search"
+                       class="multi-select-search"
+                       data-multi-select-search
+                       autocomplete="off"
+                       aria-label="搜索{{ field_label }}"
+                       placeholder="搜索{{ field_label }}">
+                <div class="multi-select-options"
+                     data-news-filter="{{ filter_key }}"
+                     data-news-filter-mode="checkboxes"
+                     aria-label="选择一个或多个{{ field_label }}">
+                    {% for option in options %}
+                        <label class="multi-select-option"
+                               data-multi-select-option
+                               data-multi-select-search-text="{{ option }} {{ option_search_terms.get(option, '') }}">
+                            <input type="checkbox" value="{{ option }}">
+                            <span><i aria-hidden="true"></i>{{ option }}</span>
+                        </label>
+                    {% endfor %}
+                    <p class="multi-select-empty" data-multi-select-empty hidden>没有匹配选项</p>
+                </div>
+                <div class="multi-select-actions">
+                    <button type="button" class="multi-select-action" data-multi-select-clear>清空选择</button>
+                    <button type="button" class="multi-select-done" data-multi-select-done>完成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+<section class="panel news-results"
+         data-news-filter-scope
+         {% if news_filter_persist_key | default("") %}data-news-filter-persist-key="{{ news_filter_persist_key }}"{% endif %}>
+    <div class="section-head news-heading">
+        <div>
+            <span class="eyebrow">CURATED SIGNALS</span>
+            <h2>{{ news_heading | default("结构化新闻") }}</h2>
+            <p class="section-subtitle">每条结论均可回溯原文，支持跨历史任务检索与组合筛选。</p>
+        </div>
+        {% if news_link_url | default("") %}
+            <a href="{{ news_link_url }}">{{ news_link_label | default("查看全部") }}</a>
+        {% endif %}
+    </div>
+
+    <div class="news-filter-bar">
+        <div class="filter-field search-field">
+            <label for="filter-search-{{ run.id }}">搜索</label>
+            <div class="search-input">
+                <span aria-hidden="true"></span>
+                <input id="filter-search-{{ run.id }}" type="search"
+                       placeholder="搜索事件、公司或来源"
+                       autocomplete="off"
+                       data-news-search>
+            </div>
+        </div>
+        {% if enable_multi_select_filters | default(false) %}
+            {{ multi_select_filter("topic", "主题", "全部主题", filter_options.get("topics", [])) }}
+            {{ multi_select_filter("company", "公司", "全部公司", filter_options.get("companies", []), filter_options.get("company_search_terms", {})) }}
+            {{ multi_select_filter("source", "信息源", "全部信息源", filter_options.get("sources", [])) }}
+        {% else %}
+            <div class="filter-field">
+                <label for="filter-topic-{{ run.id }}">主题</label>
+                <select id="filter-topic-{{ run.id }}" data-news-filter="topic">
+                    <option value="">全部主题</option>
+                    {% for topic in filter_options.get("topics", []) %}
+                        <option value="{{ topic }}">{{ topic }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="filter-company-{{ run.id }}">公司</label>
+                <select id="filter-company-{{ run.id }}" data-news-filter="company">
+                    <option value="">全部公司</option>
+                    {% for company in filter_options.get("companies", []) %}
+                        <option value="{{ company }}">{{ company }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="filter-source-{{ run.id }}">信息源</label>
+                <select id="filter-source-{{ run.id }}" data-news-filter="source">
+                    <option value="">全部信息源</option>
+                    {% for source in filter_options.get("sources", []) %}
+                        <option value="{{ source }}">{{ source }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+        <div class="filter-field small">
+            <label>日期</label>
+            <div class="date-picker" data-date-picker>
+                <button type="button"
+                        class="date-picker-toggle"
+                        data-date-picker-toggle
+                        aria-expanded="false">
+                    <span data-date-picker-label>选择日期</span>
+                </button>
+                <div class="date-picker-panel" data-date-picker-panel hidden>
+                    <div class="date-picker-head">
+                        <button type="button" class="date-picker-nav" data-date-picker-prev aria-label="上个月">‹</button>
+                        <div class="date-picker-month" data-date-picker-month></div>
+                        <button type="button" class="date-picker-nav" data-date-picker-next aria-label="下个月">›</button>
+                    </div>
+                    <div class="date-picker-weekdays" aria-hidden="true">
+                        <span>日</span>
+                        <span>一</span>
+                        <span>二</span>
+                        <span>三</span>
+                        <span>四</span>
+                        <span>五</span>
+                        <span>六</span>
+                    </div>
+                    <div class="date-picker-grid" data-date-picker-grid></div>
+                    {% if show_date_range_shortcuts | default(false) %}
+                        <div class="date-picker-quick-ranges" aria-label="快捷选择日期范围">
+                            <button type="button" class="date-picker-action" data-date-picker-range="7d">过往1周</button>
+                            <button type="button" class="date-picker-action" data-date-picker-range="1m">过往1个月</button>
+                            <button type="button" class="date-picker-action" data-date-picker-range="3m">过往1季度</button>
+                            <button type="button" class="date-picker-action" data-date-picker-range="1y">过往1年</button>
+                        </div>
+                    {% endif %}
+                    <div class="date-picker-actions">
+                        <button type="button" class="date-picker-action" data-date-picker-clear>清空日期</button>
+                        <button type="button" class="date-picker-done" data-date-picker-done>完成</button>
+                    </div>
+                </div>
+                <div class="date-filter-values"
+                     data-news-filter="date"
+                     data-news-filter-mode="checkboxes"
+                     aria-label="选择一个或多个发布日期">
+                    {% for date in filter_options.get("dates", []) %}
+                        <input type="checkbox"
+                               value="{{ date }}"
+                               {% if active_filters.get("date") == date %}checked{% endif %}>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="filter-tools">
+            <span class="filter-count"><strong data-news-count>{{ structured_items | length }}</strong> / {{ structured_items | length }} 条</span>
+            <div class="view-switch" aria-label="结果密度">
+                <button type="button" class="active" data-news-view="comfortable" aria-label="舒适视图">舒适</button>
+                <button type="button" data-news-view="compact" aria-label="紧凑视图">紧凑</button>
+            </div>
+            <div class="filter-action-stack">
+                {% if enable_cross_date_dedupe | default(false) %}
+                    <button type="button"
+                            class="ghost-button"
+                            data-news-dedupe
+                            aria-pressed="false">一键去重</button>
+                {% endif %}
+                <button type="button" class="ghost-button" data-news-clear>清空筛选</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="news-topic-list">
+        {% for topic in filter_options.get("topics", []) %}
+            {% set topic_items = structured_items | selectattr("filter_topic", "equalto", topic) | list %}
+            {% if topic_items %}
+                <section class="news-topic-group" data-news-group>
+                    <div class="news-topic-head">
+                        <h3>{{ topic }}</h3>
+                        <span class="topic-count"><strong data-news-group-count>{{ topic_items | length }}</strong> 条</span>
+                    </div>
+                    <div class="news-grid">
+                        {% for item in topic_items %}
+                            <article class="news-card"
+                                     data-news-card
+                                     data-topic="{{ item.filter_topic }}"
+                                     data-company="{{ item.filter_company }}"
+                                     data-company-values="{{ item.filter_companies | tojson | forceescape }}"
+                                     data-source="{{ item.source }}"
+                                     data-date="{{ item.filter_date }}"
+                                     data-cross-date-duplicate="{{ 1 if item.cross_date_duplicate | default(false) else 0 }}"
+                                     data-cross-date-group="{{ item.cross_date_group | default('') }}"
+                                     data-cross-date-rank="{{ item.cross_date_rank | default(0) }}"
+                                     data-search="{{ item.event }} {{ item.detail }} {{ item.impact }} {{ item.company }} {{ item.filter_companies | join(' ') }} {{ item.source }}">
+                                <div class="card-meta">
+                                    <span class="category-pill">{{ item.filter_category_label }}</span>
+                                    {% if item.company %}<span>{{ item.company }}</span>{% endif %}
+                                    {% if item.filter_date %}<time>{{ item.filter_date }}</time>{% endif %}
+                                </div>
+                                <h3>{{ item.event }}</h3>
+                                <div class="news-copy news-detail">
+                                    <span class="copy-label"><i></i> 新闻摘要</span>
+                                    <p>{{ item.detail }}</p>
+                                </div>
+                                <div class="news-copy news-impact">
+                                    <span class="copy-label"><i></i> 潜在影响</span>
+                                    <p>{{ item.impact }}</p>
+                                </div>
+                                <footer class="news-card-footer">
+                                    <span title="{{ item.source }}">来源：{{ item.source or "未知" }}</span>
+                                    {% if item.url %}<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">阅读原文 <i aria-hidden="true">↗</i></a>{% endif %}
+                                </footer>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <p class="empty news-filter-empty" data-news-empty hidden>当前筛选没有匹配的结构化新闻。</p>
+</section>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>AI每日大事件</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}?v=20260721_filter_search_visibility">
+    <script src="{{ url_for('static', path='app.js') }}?v=20260721_filter_search_visibility" defer></script>
+</head>
+<body>
+    {% set current_path = request.url.path %}
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="/" aria-label="AI每日大事件首页">
+                <span class="brand-mark" aria-hidden="true">
+                    <span></span><span></span><span></span>
+                </span>
+                <span class="brand-copy">
+                    <strong>AI Daily</strong>
+                    <small>Intelligence Desk</small>
+                </span>
+            </a>
+            <nav aria-label="主导航">
+                <a href="/" {% if current_path == "/" %}class="active" aria-current="page"{% endif %}>今日简报</a>
+                <a href="/sources" {% if current_path.startswith("/sources") %}class="active" aria-current="page"{% endif %}>信息源</a>
+                <a href="/runs" {% if current_path == "/runs" or current_path.startswith("/runs/") %}class="active" aria-current="page"{% endif %}>任务记录</a>
+            </nav>
+            <a class="topbar-action{% if current_path == '/new' %} active{% endif %}" href="/new">
+                <span aria-hidden="true">+</span> 新建抓取
+            </a>
+        </div>
+    </header>
+
+    <main class="page" id="main-content">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="footer">
+        <span>AI Daily Intelligence Desk</span>
+        <span>严格时间窗 · 多源校验 · 可追溯分析</span>
+    </footer>
+</body>
+</html>

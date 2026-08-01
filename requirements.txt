@@ -1,0 +1,23 @@
+# AI每日大事件 Max — 依赖
+# Python 版本要求：3.10+（推荐 3.13；本机用 /Library/Frameworks/Python.framework/Versions/3.13）
+# 安装方式：
+#   /Library/Frameworks/Python.framework/Versions/3.13/bin/python3 -m pip install -r requirements.txt
+
+streamlit>=1.36         # 旧版本地 UI（保留兼容；公开部署入口改用 FastAPI）
+fastapi>=0.111          # 公开网页服务
+uvicorn[standard]>=0.30 # ASGI 运行服务器
+jinja2>=3.1             # 服务端 HTML 模板
+python-multipart>=0.0.9 # FastAPI 表单解析
+sqlalchemy>=2.0         # 持久化 ORM
+psycopg[binary]>=3.2    # PostgreSQL 驱动（Railway/Render）
+curl-cffi>=0.7          # 主 HTTP 客户端：chrome120 TLS 指纹模拟（X.com/Cloudflare 站点必需）
+requests>=2.31          # 兜底 HTTP 客户端
+beautifulsoup4>=4.12    # HTML 解析
+lxml>=5.0               # bs4 解析后端
+trafilatura>=1.12       # 非标准文章页的正文、标题与发布日期精确提取
+feedparser>=6.0         # RSS 解析
+pandas>=2.0             # 结果表格 / CSV 导出
+python-dateutil>=2.9    # 宽松日期解析
+openai>=1.40            # OpenRouter / OpenAI / Kimi / MiniMax / DeepSeek / Bytedance(AzureOpenAI)
+anthropic>=0.34         # Anthropic Claude
+google-genai>=0.3       # Gemini 原生 SDK（缺失时自动降级 OpenAI 兼容端点）

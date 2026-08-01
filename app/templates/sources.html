@@ -1,0 +1,191 @@
+{% extends "layout.html" %}
+
+{% block title %}信息源管理 · AI每日大事件 Max{% endblock %}
+
+{% block content %}
+<section class="hero page-hero">
+    <div class="hero-copy">
+        <span class="eyebrow">SOURCE NETWORK</span>
+        <h1>信息源管理</h1>
+        <p>
+            统一管理默认源与自定义源。当前启用 {{ enabled_source_total }} / {{ source_rows | length }} 个，
+            系统预置 {{ builtin_total }} 个。
+        </p>
+    </div>
+    <a class="secondary-button" href="/new">去发起抓取</a>
+</section>
+
+<datalist id="category-options">
+    {% for category in source_categories %}
+        <option value="{{ category }}"></option>
+    {% endfor %}
+</datalist>
+
+<section class="panel">
+    <div class="section-head">
+        <div>
+            <h2>全部信息源</h2>
+            <p class="section-subtitle">修改默认源会生成覆盖配置；停用后不会进入新任务，但可随时恢复。</p>
+        </div>
+        <div class="search-input table-search">
+            <span aria-hidden="true"></span>
+            <input type="search" placeholder="搜索名称、板块或来源" data-table-search="source-table">
+        </div>
+    </div>
+
+    <div class="table-shell">
+    <table class="source-table" id="source-table">
+        <thead>
+        <tr>
+            <th>名称</th>
+            <th>来源</th>
+            <th>板块</th>
+            <th>网址</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for source in source_rows %}
+            <tr data-table-row>
+                <td class="source-name-cell">
+                    <div class="source-name">{{ source.name }}</div>
+                    <button type="button"
+                            class="source-edit-button"
+                            data-source-edit-toggle
+                            aria-controls="source-edit-{{ loop.index }}"
+                            aria-expanded="false">编辑</button>
+                </td>
+                <td>{{ source.origin_label }}</td>
+                <td>{{ source.category }}</td>
+                <td class="source-url-cell">
+                    <a href="{{ source.url }}" target="_blank" rel="noreferrer">主页</a>
+                    {% if source.rss_url %}
+                        · <a href="{{ source.rss_url }}" target="_blank" rel="noreferrer">RSS</a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if source.enabled %}
+                        <span class="badge status-completed">启用</span>
+                    {% else %}
+                        <span class="badge status-failed">停用</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="row-actions">
+                        <form method="post" action="{{ source.toggle_action }}" class="inline-form" data-preserve-scroll>
+                            {% if admin_required %}<input type="password" name="admin_password" placeholder="管理员密码" required>{% endif %}
+                            <button type="submit" class="ghost-button">
+                                {{ "停用" if source.enabled else "启用" }}
+                            </button>
+                        </form>
+                        <form method="post" action="{{ source.delete_action }}" class="inline-form" data-preserve-scroll
+                              onsubmit="return confirm('{{ source.delete_confirm }}');">
+                            {% if admin_required %}<input type="password" name="admin_password" placeholder="管理员密码" required>{% endif %}
+                            <button type="submit" class="ghost-button danger">{{ source.delete_label }}</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr id="source-edit-{{ loop.index }}" class="source-edit-row" hidden>
+                <td colspan="6">
+                    <form method="post"
+                          action="{{ source.edit_action }}"
+                          data-preserve-scroll
+                          class="edit-form source-edit-form{% if source.is_search_api %} search-api-edit-form{% endif %}">
+                        <div class="field">
+                            <label>名称</label>
+                            <input type="text" name="name" value="{{ source.name }}" required maxlength="200">
+                        </div>
+                        <div class="field">
+                            <label>板块</label>
+                            <input type="text" name="category" value="{{ source.category }}" list="category-options">
+                        </div>
+                        <div class="field wide-field">
+                            <label>主页 / 网址</label>
+                            <input type="text" name="url" value="{{ source.url }}" required>
+                        </div>
+                        <div class="field wide-field">
+                            <label>RSS 地址（可选）</label>
+                            <input type="text" name="rss_url" value="{{ source.rss_url }}">
+                        </div>
+                        {% if source.is_search_api %}
+                            <div class="field search-api-key-field">
+                                <label>{{ source.search_api_name }} API Key（可选）</label>
+                                <div class="inline-secret-field">
+                                    <input type="password"
+                                           name="{{ source.search_api_slug }}_api_key"
+                                           autocomplete="off"
+                                           value="{{ source.search_api_key }}"
+                                           placeholder="{% if source.search_api_key_configured %}已保存或已配置环境变量，主动清空前会持续保留{% else %}输入 {{ source.search_api_name }} API Key{% endif %}">
+                                    <button type="submit"
+                                            name="save_{{ source.search_api_slug }}_api_key"
+                                            value="1"
+                                            class="ghost-button search-api-save-button"
+                                            title="保存后应用于当前配置和以后所有抓取任务">保存并应用</button>
+                                    <button type="submit"
+                                            name="clear_{{ source.search_api_slug }}_api_key"
+                                            value="1"
+                                            class="ghost-button search-api-save-button"
+                                            title="清空">清空</button>
+                                </div>
+                            </div>
+                        {% endif %}
+                        {% if admin_required %}
+                            <div class="field">
+                                <label>管理员密码</label>
+                                <input type="password" name="admin_password" required>
+                            </div>
+                        {% endif %}
+                        <div class="actions">
+                            <button type="submit">保存修改</button>
+                        </div>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+
+<section class="panel add-source-panel">
+    <div class="section-head">
+        <div>
+            <h2>新增信息源</h2>
+            <p class="section-subtitle">添加你常看的新网站；有 RSS 时填上，抓取会更稳定、更准确。</p>
+        </div>
+    </div>
+    <form method="post" action="/sources" class="form-grid" data-preserve-scroll>
+        <div class="field">
+            <label for="add-name">名称</label>
+            <input id="add-name" type="text" name="name" required maxlength="200"
+                   autocomplete="off" placeholder="例如 量子位">
+        </div>
+        <div class="field">
+            <label for="add-category">板块</label>
+            <input id="add-category" type="text" name="category" list="category-options"
+                   autocomplete="off" placeholder="自定义信源">
+        </div>
+        <div class="field full">
+            <label for="add-url">主页 / 网址</label>
+            <input id="add-url" type="text" name="url" required
+                   autocomplete="off" placeholder="例如 https://www.qbitai.com/">
+        </div>
+        <div class="field full">
+            <label for="add-rss">RSS 地址（可选）</label>
+            <input id="add-rss" type="text" name="rss_url"
+                   autocomplete="off" placeholder="例如 https://www.qbitai.com/feed">
+        </div>
+        {% if admin_required %}
+            <div class="field">
+                <label for="add-admin">管理员密码</label>
+                <input id="add-admin" type="password" name="admin_password" autocomplete="current-password" required>
+            </div>
+        {% endif %}
+        <div class="actions full">
+            <button type="submit">添加信息源</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

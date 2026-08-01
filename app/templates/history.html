@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block title %}历史记录 · AI每日大事件 Max{% endblock %}
+
+{% block content %}
+<section class="hero page-hero">
+    <div class="hero-copy">
+        <span class="eyebrow">BRIEFING ARCHIVE</span>
+        <h1>历史记录</h1>
+        <p>每次抓取、覆盖报告和分析结论都会持久化，可随时回看与重新分析。</p>
+    </div>
+    <a class="primary-link" href="/new">创建新简报</a>
+</section>
+
+<section class="panel history-panel">
+    <div class="section-head">
+        <div>
+            <h2>全部任务</h2>
+            <p class="section-subtitle">{% if runs %}共 {{ runs | length }} 次任务，按创建时间倒序排列。{% else %}还没有任务记录。{% endif %}</p>
+        </div>
+    </div>
+    {% if runs %}
+        <div class="table-shell">
+        <table>
+            <thead>
+            <tr>
+                <th>任务</th>
+                <th>状态</th>
+                <th>阶段</th>
+                <th>原始条目</th>
+                <th>结构化新闻</th>
+                <th>模型</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for run in runs %}
+                <tr>
+                    <td><a class="run-id-link" href="/runs/{{ run.id }}">{{ run.id }} <span>↗</span></a></td>
+                    <td><span class="badge status-{{ run.status }}">{{ status_labels.get(run.status, run.status) }}</span></td>
+                    <td>{{ run.phase }}</td>
+                    <td>{{ run.raw_count }}</td>
+                    <td>{{ run.structured_count }}</td>
+                    <td>{{ run.provider }}{% if run.model %} / {{ run.model }}{% endif %}</td>
+                    <td>
+                        {% if run.created_at %}
+                            <time datetime="{{ run.created_at | utc_iso }}" data-local-datetime>
+                                {{ run.created_at.strftime("%Y-%m-%d %H:%M") }}
+                            </time>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if run.status in live_statuses %}
+                            <span class="muted">运行中不可删</span>
+                        {% else %}
+                            <form method="post" action="/runs/{{ run.id }}/delete" class="inline-form" data-preserve-scroll
+                                  onsubmit="return confirm('确定删除任务 {{ run.id }} 吗？这会同时删除该任务的日志、原始条目和精选新闻。');">
+                                {% if admin_required %}<input type="password" name="admin_password" placeholder="管理员密码" required>{% endif %}
+                                <button type="submit" class="ghost-button danger">删除</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    {% else %}
+        <div class="empty-state compact-empty">
+            <h2>还没有历史任务</h2>
+            <p>完成第一次抓取后，运行过程和分析结果会出现在这里。</p>
+            <a class="secondary-button" href="/new">开始第一次抓取</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
