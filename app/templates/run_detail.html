@@ -119,13 +119,6 @@
                 <p class="help inline-help"><span class="privacy-dot"></span> API Key 只用于本次分析请求，不会保存到数据库。</p>
             </div>
 
-            {% if admin_required %}
-                <div class="field">
-                    <label for="admin_password">管理员密码</label>
-                    <input id="admin_password" type="password" name="admin_password" autocomplete="current-password" required>
-                </div>
-            {% endif %}
-
             <div class="actions full">
                 <button type="submit">{% if run.structured_count > 0 %}重新生成分析{% else %}启动智能分析{% endif %}</button>
             </div>

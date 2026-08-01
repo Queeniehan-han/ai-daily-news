@@ -9,8 +9,6 @@ services:
         fromDatabase:
           name: ai-news-max-db
           property: connectionString
-      - key: ADMIN_PASSWORD
-        sync: false
       - key: MODEL_PROVIDER
         value: Bytedance ModelHub
       - key: MODEL_NAME
@@ -21,4 +19,3 @@ services:
 databases:
   - name: ai-news-max-db
     plan: starter
-

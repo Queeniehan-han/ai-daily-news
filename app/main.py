@@ -216,12 +216,6 @@ def _selected_model(model: str, custom_model: str, *, required: bool = False) ->
     return selected
 
 
-def _admin_required(admin_password: str) -> None:
-    expected = os.getenv("ADMIN_PASSWORD", "").strip()
-    if expected and admin_password != expected:
-        raise HTTPException(status_code=403, detail="管理员密码不正确。")
-
-
 def _all_source_categories() -> list[str]:
     """PRD 板块 + 用户自定义信源板块（去重、稳定顺序，自定义排在后面）。"""
     ordered = list(config.get_source_categories())
@@ -276,7 +270,6 @@ def _template_context(request: Request, **extra) -> dict:
         "provider_models": _provider_models(),
         "default_provider": provider,
         "default_model": _default_model(provider),
-        "admin_required": bool(os.getenv("ADMIN_PASSWORD", "").strip()),
         "env_key_configured": bool(os.getenv("MODEL_API_KEY", "").strip()),
         "status_labels": STATUS_LABELS,
         "issue_labels": ISSUE_LABELS,
@@ -1128,10 +1121,8 @@ def create_source(
     url: str = Form(default=""),
     rss_url: str = Form(default=""),
     category: str = Form(default=""),
-    admin_password: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    _admin_required(admin_password)
     name, url, rss_url = _validate_source_form(name, url, rss_url)
     category = (category or "").strip() or "自定义信源"
     _validate_source_name_available(db, name)
@@ -1159,10 +1150,8 @@ def edit_builtin_source(
     tavily_api_key: str = Form(default=""),
     clear_tavily_api_key: str = Form(default=""),
     category: str = Form(default=""),
-    admin_password: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    _admin_required(admin_password)
     _, base = _builtin_source_or_404(source_index)
     name, url, rss_url = _validate_source_form(name, url, rss_url)
     category = (category or "").strip() or base.get("category", "其他")
@@ -1194,10 +1183,8 @@ def edit_builtin_source(
 @app.post("/sources/default/{source_index}/toggle")
 def toggle_builtin_source(
     source_index: int,
-    admin_password: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    _admin_required(admin_password)
     _, base = _builtin_source_or_404(source_index)
     source_key = base["name"]
     override = _builtin_override(db, source_key)
@@ -1221,10 +1208,8 @@ def toggle_builtin_source(
 @app.post("/sources/default/{source_index}/delete")
 def delete_builtin_source(
     source_index: int,
-    admin_password: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    _admin_required(admin_password)
     _, base = _builtin_source_or_404(source_index)
     override = _builtin_override(db, base["name"])
     name = override.name if override else base["name"]
@@ -1251,10 +1236,8 @@ def edit_source(
     url: str = Form(default=""),
     rss_url: str = Form(default=""),
     category: str = Form(default=""),
-    admin_password: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    _admin_required(admin_password)
     source = db.get(CustomSource, source_id)
     if not source:
         raise HTTPException(status_code=404, detail="信息源不存在。")
@@ -1275,10 +1258,8 @@ def edit_source(
 @app.post("/sources/{source_id}/toggle")
 def toggle_source(
     source_id: int,
-    admin_password: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    _admin_required(admin_password)
     source = db.get(CustomSource, source_id)
     if not source:
         raise HTTPException(status_code=404, detail="信息源不存在。")
@@ -1293,10 +1274,8 @@ def toggle_source(
 @app.post("/sources/{source_id}/delete")
 def delete_source(
     source_id: int,
-    admin_password: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    _admin_required(admin_password)
     source = db.get(CustomSource, source_id)
     if not source:
         raise HTTPException(status_code=404, detail="信息源不存在。")
@@ -1314,9 +1293,7 @@ def create_crawl_run(
     model: str = Form(default=""),
     custom_model: str = Form(default=""),
     api_key: str = Form(default=""),
-    admin_password: str = Form(default=""),
 ):
-    _admin_required(admin_password)
     selected_model = _selected_model(
         model,
         custom_model,
@@ -1342,10 +1319,8 @@ def history(request: Request, db: Session = Depends(get_db)):
 @app.post("/runs/{run_id}/delete")
 def delete_run(
     run_id: str,
-    admin_password: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    _admin_required(admin_password)
     run = _get_run_or_404(db, run_id)
     if run.status in LIVE_STATUSES:
         raise HTTPException(status_code=409, detail="任务仍在运行，完成或失败后再删除。")
@@ -1437,10 +1412,8 @@ def analyze_run(
     model: str = Form(default=""),
     custom_model: str = Form(default=""),
     api_key: str = Form(default=""),
-    admin_password: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
-    _admin_required(admin_password)
     run = _get_run_or_404(db, run_id)
     if run.status in LIVE_STATUSES:
         raise HTTPException(status_code=409, detail="任务仍在运行，请稍后再试。")

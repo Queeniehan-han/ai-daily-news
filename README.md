@@ -58,7 +58,6 @@ $PY -m streamlit run main.py
 
 ```bash
 DATABASE_URL=平台 PostgreSQL 自动生成
-ADMIN_PASSWORD=你的管理员密码
 MODEL_PROVIDER=Bytedance ModelHub
 MODEL_NAME=gemini-3.5-flash
 MODEL_API_KEY=你的模型 Key

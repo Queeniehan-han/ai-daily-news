@@ -74,14 +74,12 @@
                 <td>
                     <div class="row-actions">
                         <form method="post" action="{{ source.toggle_action }}" class="inline-form" data-preserve-scroll>
-                            {% if admin_required %}<input type="password" name="admin_password" placeholder="管理员密码" required>{% endif %}
                             <button type="submit" class="ghost-button">
                                 {{ "停用" if source.enabled else "启用" }}
                             </button>
                         </form>
                         <form method="post" action="{{ source.delete_action }}" class="inline-form" data-preserve-scroll
                               onsubmit="return confirm('{{ source.delete_confirm }}');">
-                            {% if admin_required %}<input type="password" name="admin_password" placeholder="管理员密码" required>{% endif %}
                             <button type="submit" class="ghost-button danger">{{ source.delete_label }}</button>
                         </form>
                     </div>
@@ -131,12 +129,6 @@
                                 </div>
                             </div>
                         {% endif %}
-                        {% if admin_required %}
-                            <div class="field">
-                                <label>管理员密码</label>
-                                <input type="password" name="admin_password" required>
-                            </div>
-                        {% endif %}
                         <div class="actions">
                             <button type="submit">保存修改</button>
                         </div>
@@ -177,12 +169,6 @@
             <input id="add-rss" type="text" name="rss_url"
                    autocomplete="off" placeholder="例如 https://www.qbitai.com/feed">
         </div>
-        {% if admin_required %}
-            <div class="field">
-                <label for="add-admin">管理员密码</label>
-                <input id="add-admin" type="password" name="admin_password" autocomplete="current-password" required>
-            </div>
-        {% endif %}
         <div class="actions full">
             <button type="submit">添加信息源</button>
         </div>
