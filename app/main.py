@@ -1486,3 +1486,63 @@ async def run_events(run_id: str):
 def healthz(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
     return {"ok": True, "database": "reachable"}
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# PDF 报告导出
+# ──────────────────────────────────────────────────────────────────────────
+
+@app.get("/pdf-report")
+def pdf_report(db: Session = Depends(get_db)):
+    """导出当日结构化新闻 PDF 报告，触发浏览器下载。"""
+    import io
+    from datetime import datetime
+    from app.pdf_report import generate_pdf_report
+
+    latest = db.query(Run).order_by(Run.created_at.desc()).first()
+
+    # 获取最新任务的已结构化新闻
+    items: list[StructuredNewsRecord] = []
+    if latest:
+        items = _prepare_structured_items(
+            db.query(StructuredNewsRecord)
+            .filter_by(run_id=latest.id)
+            .order_by(StructuredNewsRecord.id.asc())
+            .all()
+        )
+
+    # 若最新任务暂无结构化结果，回退到最近有结果的任务
+    if not items:
+        latest_with_items = (
+            db.query(Run)
+            .filter(Run.structured_count > 0)
+            .order_by(Run.created_at.desc())
+            .first()
+        )
+        if latest_with_items:
+            items = _prepare_structured_items(
+                db.query(StructuredNewsRecord)
+                .filter_by(run_id=latest_with_items.id)
+                .order_by(StructuredNewsRecord.id.asc())
+                .all()
+            )
+            latest = latest_with_items
+
+    start, end = get_strict_window()
+    pdf_bytes = generate_pdf_report(
+        latest,
+        items,
+        window_start=start.strftime("%Y-%m-%d %H:%M"),
+        window_end=end.strftime("%Y-%m-%d %H:%M"),
+    )
+
+    date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
+    filename = f"AI-Daily-News-Report-{date_str}.pdf"
+
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )

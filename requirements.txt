@@ -21,3 +21,4 @@ python-dateutil>=2.9    # 宽松日期解析
 openai>=1.40            # OpenRouter / OpenAI / Kimi / MiniMax / DeepSeek / Bytedance(AzureOpenAI)
 anthropic>=0.34         # Anthropic Claude
 google-genai>=0.3       # Gemini 原生 SDK（缺失时自动降级 OpenAI 兼容端点）
+reportlab>=4.0          # PDF 报告生成（纯 Python，内置 CJK 字体支持）

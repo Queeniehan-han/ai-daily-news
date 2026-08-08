@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f5f7fb">
     <title>AI每日大事件</title>
-    <link rel="stylesheet" href="/static/app.css?v=20260801_railway_https">
-    <script src="/static/app.js?v=20260801_railway_https" defer></script>
+    <link rel="stylesheet" href="/static/app.css?v=20260808_pdf_report">
+    <script src="/static/app.js?v=20260808_pdf_report" defer></script>
 </head>
 <body>
     {% set current_path = request.url.path %}
@@ -29,9 +29,14 @@
                 <a href="/sources" {% if current_path.startswith("/sources") %}class="active" aria-current="page"{% endif %}>信息源</a>
                 <a href="/runs" {% if current_path == "/runs" or current_path.startswith("/runs/") %}class="active" aria-current="page"{% endif %}>任务记录</a>
             </nav>
-            <a class="topbar-action{% if current_path == '/new' %} active{% endif %}" href="/new">
-                <span aria-hidden="true">+</span> 新建抓取
-            </a>
+            <div class="topbar-actions">
+                <a class="topbar-action topbar-action-pdf" href="/pdf-report" download title="下载当日 PDF 报告">
+                    <span class="pdf-icon" aria-hidden="true">PDF</span> 报告
+                </a>
+                <a class="topbar-action{% if current_path == '/new' %} active{% endif %}" href="/new">
+                    <span aria-hidden="true">+</span> 新建抓取
+                </a>
+            </div>
         </div>
     </header>
 

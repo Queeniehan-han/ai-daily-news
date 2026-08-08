@@ -1386,6 +1386,39 @@ th {
     text-decoration: none;
 }
 
+.topbar-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-self: end;
+    gap: 8px;
+}
+
+.topbar-action-pdf {
+    border-color: #f0c8cb;
+    background: rgba(255, 245, 246, 0.82);
+    color: #c0344a;
+}
+
+.topbar-action-pdf:hover {
+    border-color: #e0454b;
+    background: #fce8ea;
+}
+
+.pdf-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: #e0454b;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
 .page {
     width: min(1600px, calc(100vw - 40px));
     margin: 40px auto 72px;
@@ -2687,7 +2720,17 @@ button:hover {
         text-align: center;
     }
 
+    .topbar-actions {
+        gap: 6px;
+    }
+
     .topbar-action {
+        width: 40px;
+        padding: 6px;
+        font-size: 0;
+    }
+
+    .topbar-action-pdf {
         width: 40px;
         padding: 6px;
         font-size: 0;
@@ -2747,6 +2790,11 @@ button:hover {
 
     .topbar-action span {
         font-size: 20px;
+    }
+
+    .pdf-icon {
+        min-width: 24px;
+        font-size: 8px;
     }
 
     .hero-dashboard {
