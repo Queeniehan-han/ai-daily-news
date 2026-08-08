@@ -491,7 +491,7 @@ LLM_PROVIDERS: Dict[str, Dict] = {
 }
 
 # 默认 Provider / 模型（gemini-3.5-flash 普通账户更稳定有 quota，不要默认 -priority）
-DEFAULT_PROVIDER = "Bytedance ModelHub"
+DEFAULT_PROVIDER = "OpenRouter"
 
 # LLM 分析批大小（每批送多少条 raw item 给模型）
 ANALYZE_BATCH_SIZE = 8
